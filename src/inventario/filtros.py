@@ -11,7 +11,7 @@ def filtrar_entrenamiento(
     Las fechas son texto ISO (AAAA-MM-DD), que se ordena igual que el calendario.
     """
     fin = min(str(entrenamiento["fecha_fin"]), str(logical_date))
-    fechas = ventas["date"].astype(str)
+    fechas = pd.to_datetime(ventas["date"]).dt.strftime("%Y-%m-%d")
     mascara = fechas.between(str(entrenamiento["fecha_inicio"]), fin)
 
     if entrenamiento.get("tiendas") is not None:

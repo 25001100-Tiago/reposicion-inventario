@@ -3,7 +3,8 @@
 ## Datos y modelos
 
 - Cero datos o modelos en Git. Todo se versiona con DVC (`dvc add`, `dvc push`);
-  en Git solo entran los punteros `.dvc`.
+  en Git solo entran los punteros `.dvc`. La única excepción son las tablas de
+  métricas agregadas en `docs/evidencia/`.
 - `data/bandeja/` es una entrega externa y es de solo lectura para el pipeline.
   Únicamente `scripts/simular_sistema_origen.py` la genera.
 

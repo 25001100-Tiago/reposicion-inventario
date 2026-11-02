@@ -12,10 +12,8 @@ __pycache__/
 *.parquet
 *.pkl
 *.joblib
+*.db
 /data/kaggle_raw/
-/data/processed/*
-!/data/processed/.gitkeep
-/data/publicados/*
-!/data/publicados/.gitkeep
-/models/*
-!/models/.gitkeep
+
+# Tablas de métricas agregadas: son evidencia, no datos
+!/docs/evidencia/*.csv
