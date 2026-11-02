@@ -1,0 +1,10 @@
+# Costo por unidad. Cambiar estos valores cambia el pedido sugerido.
+defecto:
+  costo_quiebre: 3.0
+  costo_merma: 1.0
+
+# Ajustes por familia; lo que no se indique toma el valor de "defecto".
+# Ejemplo:
+#   PRODUCE:
+#     costo_merma: 2.0
+familias: {}
