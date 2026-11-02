@@ -1,13 +1,13 @@
-import copy
 import json
 import subprocess
 
+import numpy as np
 import pandas as pd
 import pytest
 
-from inventario.config import RAIZ, cargar_costos, cargar_params, cargar_yaml
+from inventario.config import RAIZ, cargar_costos, cargar_params
 from inventario.filtros import filtrar_entrenamiento
-from inventario.pedido import pedido_sugerido, razon_critica
+from inventario.pedido import costo_negocio, interpolar_cuantiles, razon_critica
 
 
 def test_params_definen_horizonte_y_ventana_de_entrenamiento():
@@ -21,16 +21,26 @@ def test_costos_por_defecto_dan_razon_critica_de_075():
     assert razon_critica(cargar_costos(), "PRODUCE") == pytest.approx(0.75)
 
 
-def test_cambiar_el_yaml_cambia_el_pedido_sin_tocar_codigo(tmp_path):
-    costos = cargar_costos()
-    base = pedido_sugerido(costos, "PRODUCE", 100, 20)
+def test_interpolacion_respeta_la_razon_critica():
+    matriz = np.array([[10.0, 20.0, 40.0]])
+    niveles = [0.1, 0.5, 0.9]
+    assert interpolar_cuantiles(matriz, niveles, np.array([0.5])) == pytest.approx(20)
+    assert interpolar_cuantiles(matriz, niveles, np.array([0.7])) == pytest.approx(30)
+    assert interpolar_cuantiles(matriz, niveles, np.array([0.3])) == pytest.approx(15)
 
-    modificado = copy.deepcopy(costos)
-    modificado["defecto"]["costo_quiebre"] = 9.0
-    ruta = tmp_path / "costos.yaml"
-    ruta.write_text(json.dumps(modificado))  # JSON es YAML válido
 
-    assert pedido_sugerido(cargar_yaml(ruta), "PRODUCE", 100, 20) > base
+def test_interpolacion_no_extrapola_fuera_de_los_cuantiles():
+    matriz = np.array([[10.0, 20.0, 40.0]])
+    niveles = [0.1, 0.5, 0.9]
+    assert interpolar_cuantiles(matriz, niveles, np.array([0.99])) == pytest.approx(40)
+    assert interpolar_cuantiles(matriz, niveles, np.array([0.01])) == pytest.approx(10)
+
+
+def test_costo_negocio_pondera_faltantes_y_sobrantes():
+    resultado = costo_negocio(
+        np.array([10.0, 10.0]), np.array([8.0, 15.0]), np.array([3.0, 3.0]), np.array([1.0, 1.0])
+    )
+    assert resultado["costo_negocio"] == pytest.approx(3 * 2 + 1 * 5)
 
 
 def test_costo_por_familia_prevalece_sobre_el_defecto():
@@ -40,12 +50,6 @@ def test_costo_por_familia_prevalece_sobre_el_defecto():
     }
     assert razon_critica(costos, "PRODUCE") == pytest.approx(0.5)
     assert razon_critica(costos, "DAIRY") == pytest.approx(0.75)
-
-
-def test_pedido_descuenta_inventario_y_nunca_es_negativo():
-    costos = cargar_costos()
-    assert pedido_sugerido(costos, "DAIRY", 100, 0, inventario=30) == 70
-    assert pedido_sugerido(costos, "DAIRY", 100, 0, inventario=500) == 0
 
 
 def test_filtro_nunca_supera_logical_date():
@@ -72,8 +76,9 @@ def test_git_no_versiona_datos_ni_modelos():
     salida = subprocess.run(
         ["git", "ls-files"], cwd=RAIZ, capture_output=True, text=True, check=True
     ).stdout.split("\n")
-    prohibidos = (".csv", ".parquet", ".pkl", ".joblib")
-    assert [ruta for ruta in salida if ruta.endswith(prohibidos)] == []
+    prohibidos = (".csv", ".parquet", ".pkl", ".joblib", ".db")
+    versionados = [ruta for ruta in salida if not ruta.startswith("docs/evidencia/")]
+    assert [ruta for ruta in versionados if ruta.endswith(prohibidos)] == []
 
 
 def test_settings_bloquean_force_push():

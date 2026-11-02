@@ -1,7 +1,11 @@
-"""Carga de configuración desde configs/."""
+"""Configuración y utilidades compartidas por los módulos del pipeline."""
 
+import argparse
+import os
+import subprocess
 from pathlib import Path
 
+import pandas as pd
 import yaml
 
 RAIZ = Path(__file__).resolve().parents[2]
@@ -18,3 +22,33 @@ def cargar_params(ruta: str | Path = RAIZ / "configs" / "params.yaml") -> dict:
 
 def cargar_costos(ruta: str | Path = RAIZ / "configs" / "costos.yaml") -> dict:
     return cargar_yaml(ruta)
+
+
+def cargar_rutas(params: dict, raiz: Path = RAIZ) -> dict[str, Path]:
+    return {clave: Path(raiz) / valor for clave, valor in params["rutas"].items()}
+
+
+def version_codigo() -> str:
+    """Commit actual, marcado con -dirty si hay cambios sin confirmar."""
+    try:
+        return subprocess.run(
+            ["git", "describe", "--always", "--dirty", "--abbrev=12"],
+            cwd=RAIZ, capture_output=True, text=True, check=True,
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return "desconocida"
+
+
+def escribir_parquet(df: pd.DataFrame, ruta: Path) -> None:
+    """Escritura atómica: el archivo final nunca queda a medias."""
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    temporal = ruta.with_name(ruta.name + ".tmp")
+    df.to_parquet(temporal, index=False)
+    os.replace(temporal, ruta)
+
+
+def leer_logical_date(descripcion: str) -> str:
+    parser = argparse.ArgumentParser(description=descripcion)
+    parser.add_argument("--logical-date", required=True, help="AAAA-MM-DD")
+    fecha = parser.parse_args().logical_date
+    return pd.Timestamp(fecha).strftime("%Y-%m-%d")

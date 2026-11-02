@@ -17,6 +17,14 @@ entrenamiento:
   fecha_fin: "2017-07-31"
   tiendas: null   # null = todas; o una lista, por ejemplo [1, 2, 44]
   familias: null  # null = todas; o una lista de familias
+  dias_validacion: 28
+  cuantiles: [0.10, 0.50, 0.90]
+  hgb:
+    max_iter: 200
+    learning_rate: 0.08
+    max_leaf_nodes: 31
+    min_samples_leaf: 40
+    random_state: 42
 
 simulacion:
   fecha_corte_hist: "2017-07-15"
