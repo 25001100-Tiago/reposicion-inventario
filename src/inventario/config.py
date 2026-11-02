@@ -29,12 +29,20 @@ def cargar_rutas(params: dict, raiz: Path = RAIZ) -> dict[str, Path]:
 
 
 def version_codigo() -> str:
-    """Commit actual, marcado con -dirty si hay cambios sin confirmar."""
-    try:
+    """Commit actual, con -dirty si hay cambios sin confirmar en código o configuración.
+
+    La evidencia queda fuera a propósito: el pipeline la reescribe y marcaría
+    como distinta una corrida repetida.
+    """
+
+    def git(*argumentos: str) -> str:
         return subprocess.run(
-            ["git", "describe", "--always", "--dirty", "--abbrev=12"],
-            cwd=RAIZ, capture_output=True, text=True, check=True,
+            ["git", *argumentos], cwd=RAIZ, capture_output=True, text=True, check=True
         ).stdout.strip()
+
+    try:
+        cambios = git("status", "--porcelain", "--", "src", "configs", "dags", "scripts")
+        return git("rev-parse", "--short=12", "HEAD") + ("-dirty" if cambios else "")
     except (OSError, subprocess.CalledProcessError):
         return "desconocida"
 

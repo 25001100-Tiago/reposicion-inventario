@@ -4,6 +4,10 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 
+# Airflow local
+airflow/.env
+airflow/logs/
+
 # Claude Code (ajustes personales)
 .claude/settings.local.json
 

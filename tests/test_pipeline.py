@@ -18,7 +18,7 @@ from inventario.entrenar_comparar import (
 )
 from inventario.ingesta_validacion import ingerir
 from inventario.preparacion import construir_features, leer_features, preparar
-from inventario.pronostico_pedido import calcular, cargar_modelo, pronosticar, publicar
+from inventario.pronostico_pedido import calcular, pronosticar, publicar, resolver_modelo
 from inventario.seguimiento import cruzar, generar
 
 CORTE = CORTE_MODELO = "2017-03-24"
@@ -163,9 +163,36 @@ def test_pronostico_no_cambia_si_cambia_la_bandeja_futura(entrenado):
 
 
 def test_modelo_entrenado_despues_del_corte_se_rechaza(entrenado):
-    ruta = entrenado["rutas"]["modelos"] / "modelo_vigente.joblib"
     with pytest.raises(RuntimeError, match="posteriores a logical_date"):
-        cargar_modelo(ruta, "2017-03-20")
+        resolver_modelo(entrenado["rutas"]["modelos"], "2017-03-20")
+
+
+def test_resuelve_el_modelo_mas_reciente_sin_fuga(entrenado):
+    modelos = entrenado["rutas"]["modelos"]
+    (modelos / "historial").mkdir()
+    joblib.dump({"tipo": "viejo", "fecha_corte": "2017-03-10"}, modelos / "historial" / "modelo_2017-03-10.joblib")
+    joblib.dump({"tipo": "medio", "fecha_corte": "2017-03-15"}, modelos / "historial" / "modelo_2017-03-15.joblib")
+
+    assert resolver_modelo(modelos, "2017-03-12")[1]["tipo"] == "viejo"
+    assert resolver_modelo(modelos, "2017-03-20")[1]["tipo"] == "medio"
+    assert resolver_modelo(modelos, CORTE)[1]["tipo"] == "cuantiles"
+
+
+def test_solo_historial_no_toca_el_modelo_vigente(entorno):
+    rutas = entorno["rutas"]
+    ruta = rutas["modelos"] / "modelo_vigente.joblib"
+    ruta.parent.mkdir(parents=True)
+    joblib.dump({"tipo": "vigente", "fecha_corte": "2017-03-31"}, ruta)
+    original = ruta.read_bytes()
+
+    ingerir(CORTE, rutas)
+    preparar(CORTE, rutas, entorno["params"])
+    entrenar_y_comparar(CORTE, rutas, entorno["params"], entorno["costos"], promover=False)
+
+    assert ruta.read_bytes() == original
+    assert (rutas["modelos"] / "historial" / f"modelo_{CORTE}.joblib").exists()
+    assert (rutas["evidencia"] / f"metrics_{CORTE}.json").exists()
+    assert not (rutas["evidencia"] / "metrics.json").exists()
 
 
 def test_pronostico_exige_ingesta_de_la_misma_fecha(entrenado):

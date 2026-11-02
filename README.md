@@ -52,5 +52,17 @@ make versionar                           # dvc add y dvc push de las salidas
 | Pronóstico y pedido | `pronostico_pedido.py` | `data/publicados/pronosticos_pedidos.parquet`, `operacion.db` |
 | Seguimiento | `seguimiento.py` | `data/publicados/seguimiento_desempeno.csv`, `docs/evidencia/` |
 
+## Airflow
+
+```bash
+make airflow-up       # genera airflow/.env y levanta Airflow en http://localhost:8080
+make airflow-down
+```
+
+El DAG `reposicion_inventario` llama a los mismos módulos. Se ejecuta una corrida
+por vez porque todas comparten `data/processed`. Para reprocesar fechas anteriores
+al corte del modelo vigente hay que entrenar antes un modelo de esa época con
+`make entrenar-historial LOGICAL_DATE=<fecha>`.
+
 La configuración está en `configs/params.yaml` y los costos en
 `configs/costos.yaml`. Las reglas de trabajo están en `CLAUDE.md`.

@@ -8,7 +8,8 @@ FECHA_ENTRENAMIENTO ?= 2017-07-31
 CORTES ?= 2017-07-31 2017-08-01 2017-08-02 2017-08-08 2017-08-15
 
 .PHONY: instalar test ingesta features entrenar pronostico seguimiento corrida \
-	entrenamiento_inicial backfill todo versionar
+	entrenamiento_inicial backfill todo versionar entrenar-historial \
+	airflow-env airflow-up airflow-down
 
 instalar:
 	python3 -m venv .venv
@@ -49,3 +50,23 @@ todo: entrenamiento_inicial backfill
 versionar:
 	.venv/bin/dvc add data/processed data/publicados models
 	.venv/bin/dvc push
+
+# Entrena un modelo para reprocesar fechas pasadas, sin tocar el vigente.
+entrenar-historial: features
+	$(PY) -m inventario.entrenar_comparar --logical-date $(LOGICAL_DATE) --solo-historial
+
+COMPOSE := docker compose -f airflow/docker-compose.yaml
+
+airflow-env:
+	@test -f airflow/.env || { \
+		echo "AIRFLOW_UID=$$(id -u)"; \
+		echo "POSTGRES_PASSWORD=$$(openssl rand -hex 24)"; \
+		echo "AIRFLOW_JWT_SECRET=$$(openssl rand -hex 32)"; \
+	} > airflow/.env
+
+airflow-up: airflow-env
+	mkdir -p airflow/logs
+	$(COMPOSE) up -d --wait airflow-apiserver airflow-scheduler airflow-dag-processor
+
+airflow-down:
+	$(COMPOSE) down
