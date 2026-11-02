@@ -17,3 +17,4 @@ __pycache__/
 
 # Tablas de métricas agregadas: son evidencia, no datos
 !/docs/evidencia/*.csv
+/models
