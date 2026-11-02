@@ -5,6 +5,7 @@ dias_validacion días disponibles. El modelo aprobado se reentrena con todo lo
 disponible antes de publicarse.
 """
 
+import argparse
 import hashlib
 import json
 import os
@@ -19,7 +20,6 @@ from inventario.config import (
     cargar_costos,
     cargar_params,
     cargar_rutas,
-    leer_logical_date,
     version_codigo,
 )
 from inventario.filtros import filtrar_entrenamiento
@@ -138,7 +138,13 @@ def version_modelo(ruta: Path) -> str:
     return hashlib.sha256(ruta.read_bytes()).hexdigest()[:12]
 
 
-def entrenar_y_comparar(logical_date: str, rutas: dict[str, Path], params: dict, costos: dict) -> dict:
+def entrenar_y_comparar(
+    logical_date: str, rutas: dict[str, Path], params: dict, costos: dict, promover: bool = True
+) -> dict:
+    """Con promover=False el resultado va a models/historial/ y no toca el vigente.
+
+    Sirve para reprocesar fechas anteriores al corte del modelo vigente.
+    """
     conf = params["entrenamiento"]
     features = leer_features(logical_date, rutas["processed"])
     disponibles = features[~features["es_futuro"] & features["sales"].notna()]
@@ -157,11 +163,15 @@ def entrenar_y_comparar(logical_date: str, rutas: dict[str, Path], params: dict,
     if costo_ml < costo_base:
         candidato = entrenar_cuantiles(datos, conf)
     ruta = rutas["modelos"] / "modelo_vigente.joblib"
+    sufijo = ""
+    if not promover:
+        ruta = rutas["modelos"] / "historial" / f"modelo_{logical_date}.joblib"
+        sufijo = f"_{logical_date}"
     decision = aplicar_compuerta(candidato, costo_ml, costo_base, ruta, conf)
 
     rutas["evidencia"].mkdir(parents=True, exist_ok=True)
     tabla = pd.DataFrame(filas).T.rename_axis("modelo").reset_index()
-    tabla.to_csv(rutas["evidencia"] / "comparacion_modelos.csv", index=False, float_format="%.4f")
+    tabla.to_csv(rutas["evidencia"] / f"comparacion_modelos{sufijo}.csv", index=False, float_format="%.4f")
     resultado = {
         "logical_date": logical_date,
         "particion": {
@@ -178,16 +188,22 @@ def entrenar_y_comparar(logical_date: str, rutas: dict[str, Path], params: dict,
         },
         "modelo_vigente": version_modelo(ruta),
     }
-    (rutas["evidencia"] / "metrics.json").write_text(
+    (rutas["evidencia"] / f"metrics{sufijo}.json").write_text(
         json.dumps(resultado, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
     return resultado
 
 
 def main() -> None:
-    logical_date = leer_logical_date(__doc__)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--logical-date", required=True, help="AAAA-MM-DD")
+    parser.add_argument("--solo-historial", action="store_true")
+    args = parser.parse_args()
     params = cargar_params()
-    resultado = entrenar_y_comparar(logical_date, cargar_rutas(params), params, cargar_costos())
+    resultado = entrenar_y_comparar(
+        args.logical_date, cargar_rutas(params), params, cargar_costos(),
+        promover=not args.solo_historial,
+    )
     print(json.dumps(resultado, indent=2, ensure_ascii=False))
 
 

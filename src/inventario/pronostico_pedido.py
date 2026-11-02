@@ -50,21 +50,20 @@ CREATE TABLE IF NOT EXISTS pronosticos_pedidos (
 """
 
 
-def cargar_modelo(ruta: Path, logical_date: str) -> dict:
-    if not ruta.exists():
-        raise FileNotFoundError(f"No hay modelo vigente en {ruta}; ejecuta el entrenamiento")
-    artefacto = joblib.load(ruta)
-    if artefacto["fecha_corte"] > logical_date:
-        raise RuntimeError(
-            f"El modelo vigente usa datos hasta {artefacto['fecha_corte']}, "
-            f"posteriores a logical_date {logical_date}"
-        )
-    return artefacto
+def resolver_modelo(modelos: Path, logical_date: str) -> tuple[Path, dict]:
+    """Elige el modelo más reciente entrenado con datos <= logical_date."""
+    rutas = [modelos / "modelo_vigente.joblib", *sorted(modelos.glob("historial/modelo_*.joblib"))]
+    candidatos = [(ruta, joblib.load(ruta)) for ruta in rutas if ruta.exists()]
+    if not candidatos:
+        raise FileNotFoundError(f"No hay modelos en {modelos}; ejecuta el entrenamiento")
+    validos = [c for c in candidatos if c[1]["fecha_corte"] <= logical_date]
+    if not validos:
+        raise RuntimeError(f"Todos los modelos usan datos posteriores a logical_date {logical_date}")
+    return max(validos, key=lambda c: c[1]["fecha_corte"])
 
 
 def calcular(logical_date: str, rutas: dict[str, Path], params: dict, costos: dict) -> pd.DataFrame:
-    ruta_modelo = rutas["modelos"] / "modelo_vigente.joblib"
-    artefacto = cargar_modelo(ruta_modelo, logical_date)
+    ruta_modelo, artefacto = resolver_modelo(rutas["modelos"], logical_date)
     features = leer_features(logical_date, rutas["processed"])
     corte = pd.Timestamp(logical_date)
     fin = corte + pd.Timedelta(days=params["pronostico"]["horizonte_dias"])
