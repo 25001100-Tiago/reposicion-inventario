@@ -1,0 +1,31 @@
+# Rutas relativas a la raíz del repositorio.
+rutas:
+  kaggle_raw: ../data/kaggle_raw
+  hist: data/hist
+  bandeja: data/bandeja
+  processed: data/processed
+  publicados: data/publicados
+  modelos: models
+  evidencia: docs/evidencia
+
+pronostico:
+  horizonte_dias: 7
+
+# El entrenamiento siempre se recorta además a logical_date.
+entrenamiento:
+  fecha_inicio: "2017-01-01"
+  fecha_fin: "2017-07-31"
+  tiendas: null   # null = todas; o una lista, por ejemplo [1, 2, 44]
+  familias: null  # null = todas; o una lista de familias
+
+simulacion:
+  fecha_corte_hist: "2017-07-15"
+  bandeja_inicio: "2017-07-16"
+  bandeja_fin: "2017-08-15"  # última fecha con ventas en train.csv
+  dia_sin_oil: "2017-08-08"
+  correccion_ventas:
+    fecha_ventas: "2017-07-24"
+    fecha_entrega: "2017-08-02"
+    tienda: 44
+    familias: [BEVERAGES, "GROCERY I", PRODUCE]
+    factor_entrega_original: 0.5  # lo que se registró mal el día original

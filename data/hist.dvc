@@ -1,0 +1,6 @@
+outs:
+- md5: 67be4449873fe10dc1365686d44ba60d.dir
+  size: 121079902
+  nfiles: 5
+  hash: md5
+  path: hist

@@ -1,0 +1,5 @@
+[core]
+    remote = almacen-local
+    autostage = true
+['remote "almacen-local"']
+    url = /home/santi_torres/product-dev/dvc-storage/reposicion-inventario
