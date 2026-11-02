@@ -1,0 +1,21 @@
+# Entorno
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Claude Code (ajustes personales)
+.claude/settings.local.json
+
+# Datos y modelos: nunca en Git, siempre en DVC
+*.csv
+*.parquet
+*.pkl
+*.joblib
+/data/kaggle_raw/
+/data/processed/*
+!/data/processed/.gitkeep
+/data/publicados/*
+!/data/publicados/.gitkeep
+/models/*
+!/models/.gitkeep
