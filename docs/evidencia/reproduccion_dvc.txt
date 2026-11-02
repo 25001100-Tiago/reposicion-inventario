@@ -1,0 +1,82 @@
+$ git log -1 --format="%h %s" cf5f044
+cf5f044 chore: versionar data/processed, data/publicados y models con DVC
+[exit 0]
+
+$ git diff --stat 13fbcca cf5f044 -- src configs
+[exit 0]
+
+$ git worktree add --detach /tmp/lab1-repro cf5f044
+Preparing worktree (detached HEAD cf5f044)
+HEAD is now at cf5f044 chore: versionar data/processed, data/publicados y models con DVC
+[exit 0]
+
+$ git rev-parse --short=12 HEAD
+cf5f044fe432
+[exit 0]
+
+$ ls data
+bandeja.dvc
+hist.dvc
+processed.dvc
+publicados.dvc
+[exit 0]
+
+$ cat data/publicados.dvc
+outs:
+- md5: c91ecad95c805cbb66bda138d8d4ea2b.dir
+  size: 11376587
+  nfiles: 3
+  hash: md5
+  path: publicados
+[exit 0]
+
+$ test -d .dvc/cache && echo "cache presente" || echo "sin cache local"
+sin cache local
+[exit 0]
+
+$ dvc pull 2>&1 | tail -2
+A       models/
+114 files fetched and 171 files added
+[exit 0]
+
+$ dvc status
+Data and pipelines are up to date.
+[exit 0]
+
+$ du -sh data/hist data/bandeja data/processed data/publicados models
+116M	data/hist
+2.8M	data/bandeja
+32M	data/processed
+11M	data/publicados
+2.7M	models
+[exit 0]
+
+$ PYTHONPATH=src python $REPO/scripts/reproducir_pronostico.py --logical-date 2017-08-02
+fecha de corte:              2017-08-02
+filas corregidas conocidas:  3
+filas publicadas:            12474
+filas recalculadas:          12474
+modelo publicado:            2085dd0ebbc6
+modelo recalculado:          2085dd0ebbc6
+código publicado:            13fbcca66e4c
+sha256 publicado:            27d2864410e9b3fa59d8f53224bce38b0436aaad7d0917cda64134390480855a
+sha256 recalculado:          27d2864410e9b3fa59d8f53224bce38b0436aaad7d0917cda64134390480855a
+filas distintas:             0
+control negativo (costo 9):  12474 filas distintas
+RESULTADO: REPRODUCIDO AL 100 % (12474/12474 filas idénticas)
+[exit 0]
+
+$ git worktree remove --force /tmp/lab1-repro
+[exit 0]
+
+$ git worktree prune
+[exit 0]
+
+$ git worktree list
+/home/santi_torres/product-dev/reposicion-inventario 073700c [docs/entrega-final]
+[exit 0]
+
+$ test -e /tmp/lab1-repro && echo 'worktree presente' || echo 'worktree eliminado'
+worktree eliminado
+[exit 0]
+

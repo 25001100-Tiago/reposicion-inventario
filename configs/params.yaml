@@ -1,6 +1,6 @@
 # Rutas relativas a la raíz del repositorio.
 rutas:
-  kaggle_raw: ../data/kaggle_raw
+  kaggle_raw: data/kaggle_raw
   hist: data/hist
   bandeja: data/bandeja
   processed: data/processed

@@ -17,7 +17,7 @@ airflow/logs/
 *.pkl
 *.joblib
 *.db
-/data/kaggle_raw/
+/data/kaggle_raw
 
 # Tablas de métricas agregadas: son evidencia, no datos
 !/docs/evidencia/*.csv

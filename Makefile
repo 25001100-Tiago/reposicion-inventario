@@ -7,7 +7,7 @@ LOGICAL_DATE ?= 2017-08-15
 FECHA_ENTRENAMIENTO ?= 2017-07-31
 CORTES ?= 2017-07-31 2017-08-01 2017-08-02 2017-08-08 2017-08-15
 
-.PHONY: instalar test ingesta features entrenar pronostico seguimiento corrida \
+.PHONY: instalar test datos ingesta features entrenar pronostico seguimiento corrida \
 	entrenamiento_inicial backfill todo versionar entrenar-historial \
 	airflow-env airflow-up airflow-down
 
@@ -17,6 +17,10 @@ instalar:
 
 test:
 	.venv/bin/pytest -q
+
+# Regenera data/hist y data/bandeja a partir de data/kaggle_raw.
+datos:
+	$(PY) scripts/simular_sistema_origen.py --sobrescribir
 
 ingesta:
 	$(PY) -m inventario.ingesta_validacion --logical-date $(LOGICAL_DATE)
