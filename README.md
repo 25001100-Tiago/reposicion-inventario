@@ -34,5 +34,23 @@ Para regenerar los datos a partir de los CSV de Kaggle:
 .venv/bin/python scripts/simular_sistema_origen.py --sobrescribir
 ```
 
+## Pipeline
+
+```bash
+make todo                                # entrena y publica todas las fechas de corte
+make corrida LOGICAL_DATE=2017-08-08     # una fecha, con el modelo vigente
+make entrenar LOGICAL_DATE=2017-07-31    # entrena y aplica la compuerta
+make test
+make versionar                           # dvc add y dvc push de las salidas
+```
+
+| Paso | Módulo | Salida |
+| --- | --- | --- |
+| Ingesta y validación | `ingesta_validacion.py` | `data/processed/*.parquet` |
+| Features | `preparacion.py` | `data/processed/features.parquet` |
+| Entrenamiento y compuerta | `entrenar_comparar.py` | `models/modelo_vigente.joblib`, `docs/evidencia/` |
+| Pronóstico y pedido | `pronostico_pedido.py` | `data/publicados/pronosticos_pedidos.parquet`, `operacion.db` |
+| Seguimiento | `seguimiento.py` | `data/publicados/seguimiento_desempeno.csv`, `docs/evidencia/` |
+
 La configuración está en `configs/params.yaml` y los costos en
 `configs/costos.yaml`. Las reglas de trabajo están en `CLAUDE.md`.

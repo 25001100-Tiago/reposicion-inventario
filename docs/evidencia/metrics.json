@@ -1,0 +1,49 @@
+{
+  "logical_date": "2017-07-31",
+  "particion": {
+    "entrenamiento": [
+      "2017-01-01",
+      "2017-07-03"
+    ],
+    "validacion": [
+      "2017-07-04",
+      "2017-07-31"
+    ],
+    "filas_entrenamiento": 327888,
+    "filas_validacion": 49896
+  },
+  "modelos": {
+    "baseline_mm28_dow": {
+      "mae": 60.25684052814754,
+      "rmse": 226.45381635120697,
+      "pinball_p10": 32.859033341111214,
+      "pinball_p50": 30.12842026407377,
+      "pinball_p90": 27.39780718703634,
+      "pinball_media": 30.12842026407377,
+      "faltantes": 1332979.3198814,
+      "sobrantes": 1673595.99511105,
+      "costo_quiebre": 3998937.9596442003,
+      "costo_merma": 1673595.99511105,
+      "costo_negocio": 5672533.95475525
+    },
+    "hgb_cuantiles": {
+      "mae": 58.65806903620896,
+      "rmse": 229.94583149716212,
+      "pinball_p10": 41.79560009783993,
+      "pinball_p50": 29.32903451810448,
+      "pinball_p90": 18.240206725438487,
+      "pinball_media": 29.788280447127633,
+      "faltantes": 787321.7966655339,
+      "sobrantes": 2917282.2077743756,
+      "costo_quiebre": 2361965.3899966013,
+      "costo_merma": 2917282.2077743756,
+      "costo_negocio": 5279247.597770977
+    }
+  },
+  "compuerta": {
+    "criterio": "costo_negocio del candidato < costo_negocio del baseline en validación",
+    "mejora_relativa": 0.06933168846959192,
+    "decision": "reemplazado"
+  },
+  "modelo_vigente": "2085dd0ebbc6"
+}
